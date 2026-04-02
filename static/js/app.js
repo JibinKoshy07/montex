@@ -626,7 +626,18 @@ function formatPercent(value) {
 function formatTimestamp(timestamp) {
     if (!timestamp) return 'Never';
     
-    const date = new Date(timestamp);
+    // Handle both formats: "2026-04-02 16:55:04" and ISO format
+    let date;
+    if (timestamp.includes(' ')) {
+        // Format: "2026-04-02 16:55:04" - parse as local time
+        const [d, t] = timestamp.split(' ');
+        const [y, m, day] = d.split('-').map(Number);
+        const [h, min, s] = t.split(':').map(Number);
+        date = new Date(y, m - 1, day, h, min, s);
+    } else {
+        date = new Date(timestamp);
+    }
+    
     const now = new Date();
     const diff = now - date;
     
