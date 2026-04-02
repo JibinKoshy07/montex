@@ -719,8 +719,8 @@ async function openServerDetailModal(serverId) {
         updateDetailMetric('Storage', m.storage_percent);
     }
     
-    // Load chart with default 1 day
-    loadServerDetailChart(serverId, 1);
+    // Load chart with default 30 minutes
+    loadServerDetailChart(serverId, 0.02);
     
     modal.classList.add('active');
 }
@@ -735,7 +735,9 @@ function updateDetailMetric(name, value) {
 
 async function loadServerDetailChart(serverId, days) {
     try {
-        const response = await fetch(`/api/servers/${serverId}/metrics?hours=${days * 24}`);
+        // Convert days to hours for API
+        const hours = Math.ceil(days * 24);
+        const response = await fetch(`/api/servers/${serverId}/metrics?hours=${hours}`);
         const data = await response.json();
         
         if (!data.success || !data.history || data.history.length === 0) {
@@ -746,9 +748,14 @@ async function loadServerDetailChart(serverId, days) {
         const history = data.history;
         const labels = history.map(m => {
             const date = new Date(m.collected_at);
-            if (days === 1) {
+            if (days <= 0.25) {
+                // Less than 6 hours: show time only
+                return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            } else if (days <= 1) {
+                // Less than 24 hours: show hour:minute
                 return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
             } else {
+                // More than 1 day: show date + time
                 return date.toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
             }
         });
