@@ -1,7 +1,6 @@
 import os
 from cryptography.fernet import Fernet
 import base64
-import hashlib
 import config
 
 def get_encryption_key():
@@ -11,10 +10,23 @@ def get_encryption_key():
         # Use provided key (must be valid Fernet key)
         return key.encode() if isinstance(key, str) else key
     
-    # Generate key from machine-specific data
+    # Try to load existing key from database first
+    import models
+    saved_key = models.get_setting('encryption_key')
+    if saved_key:
+        return saved_key.encode()
+    
+    # Generate a new key and save it for persistence
     machine_id = os.urandom(32)
-    key = base64.urlsafe_b64encode(machine_id)
-    return key
+    new_key = base64.urlsafe_b64encode(machine_id)
+    
+    # Save the key to database so it persists across restarts
+    try:
+        models.set_setting('encryption_key', new_key.decode())
+    except Exception:
+        pass
+    
+    return new_key
 
 def encrypt(data):
     """Encrypt data"""
