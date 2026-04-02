@@ -306,9 +306,75 @@
         </div>
     </div>
     
+    <!-- Server Detail Modal -->
+    <div class="modal" id="serverDetailModal">
+        <div class="modal-content modal-lg">
+            <div class="modal-header">
+                <h2 id="detailServerName">Server Details</h2>
+                <button class="modal-close" id="closeDetailModal">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M18 6L6 18M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="detail-stats">
+                    <div class="detail-stat">
+                        <span class="detail-stat-label">Status</span>
+                        <span class="detail-stat-value" id="detailStatus">--</span>
+                    </div>
+                    <div class="detail-stat">
+                        <span class="detail-stat-label">Hostname</span>
+                        <span class="detail-stat-value" id="detailHostname">--</span>
+                    </div>
+                    <div class="detail-stat">
+                        <span class="detail-stat-label">Last Check</span>
+                        <span class="detail-stat-value" id="detailLastCheck">--</span>
+                    </div>
+                </div>
+                
+                <div class="detail-metrics">
+                    <div class="detail-metric-card">
+                        <div class="detail-metric-header">CPU</div>
+                        <div class="detail-metric-value" id="detailCpu">--</div>
+                        <div class="detail-metric-bar">
+                            <div class="detail-metric-fill" id="detailCpuBar" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    <div class="detail-metric-card">
+                        <div class="detail-metric-header">Memory</div>
+                        <div class="detail-metric-value" id="detailMemory">--</div>
+                        <div class="detail-metric-bar">
+                            <div class="detail-metric-fill" id="detailMemoryBar" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    <div class="detail-metric-card">
+                        <div class="detail-metric-header">Storage</div>
+                        <div class="detail-metric-value" id="detailStorage">--</div>
+                        <div class="detail-metric-bar">
+                            <div class="detail-metric-fill" id="detailStorageBar" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="chart-section">
+                    <h3>Historical Data</h3>
+                    <div class="chart-tabs">
+                        <button class="chart-tab active" data-range="1">24 Hours</button>
+                        <button class="chart-tab" data-range="3">3 Days</button>
+                        <button class="chart-tab" data-range="7">7 Days</button>
+                    </div>
+                    <canvas id="metricsChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    
     <!-- Toast Container -->
     <div class="toast-container" id="toastContainer"></div>
 
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="/static/js/app.js"></script>
 </body>
 </html>

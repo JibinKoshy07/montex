@@ -6,6 +6,8 @@ let servers = [];
 let settings = {};
 let currentFilter = 'all';
 let searchQuery = '';
+let currentDetailServerId = null;
+let metricsChart = null;
 
 // DOM Elements
 const sidebar = document.getElementById('sidebar');
@@ -15,6 +17,7 @@ const lastUpdated = document.getElementById('lastUpdated');
 const serversGrid = document.getElementById('serversGrid');
 const serversTableBody = document.getElementById('serversTableBody');
 const serverModal = document.getElementById('serverModal');
+const serverDetailModal = document.getElementById('serverDetailModal');
 const serverForm = document.getElementById('serverForm');
 const toastContainer = document.getElementById('toastContainer');
 
@@ -60,6 +63,26 @@ function setupEventListeners() {
         if (e.target === serverModal) {
             closeServerModal();
         }
+    });
+    
+    // Server detail modal
+    document.getElementById('closeDetailModal').addEventListener('click', () => {
+        closeServerDetailModal();
+    });
+    
+    serverDetailModal.addEventListener('click', (e) => {
+        if (e.target === serverDetailModal) {
+            closeServerDetailModal();
+        }
+    });
+    
+    // Chart tabs
+    document.querySelectorAll('.chart-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+            document.querySelectorAll('.chart-tab').forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            loadServerDetailChart(currentDetailServerId, parseInt(tab.dataset.range));
+        });
     });
     
     // Server form
@@ -298,7 +321,7 @@ function renderServerCards(list) {
         card.addEventListener('click', (e) => {
             if (e.target.closest('.server-actions')) return;
             const serverId = card.dataset.id;
-            openServerModal(parseInt(serverId));
+            openServerDetailModal(parseInt(serverId));
         });
     });
 }
@@ -654,3 +677,168 @@ function showToast(message, type = 'success') {
 // Make functions global
 window.openServerModal = openServerModal;
 window.deleteServer = deleteServer;
+window.openServerDetailModal = openServerDetailModal;
+
+// Server Detail Modal Functions
+async function openServerDetailModal(serverId) {
+    currentDetailServerId = serverId;
+    const server = servers.find(s => s.id === serverId);
+    if (!server) return;
+    
+    const modal = document.getElementById('serverDetailModal');
+    document.getElementById('detailServerName').textContent = server.name;
+    document.getElementById('detailHostname').textContent = server.hostname;
+    
+    // Get current metrics
+    const response = await fetch(`/api/servers/${serverId}/metrics`);
+    const data = await response.json();
+    
+    if (data.success && data.latest) {
+        const m = data.latest;
+        const status = m.is_online ? 'online' : 'offline';
+        
+        document.getElementById('detailStatus').textContent = status.charAt(0).toUpperCase() + status.slice(1);
+        document.getElementById('detailStatus').className = `detail-stat-value text-${status === 'online' ? 'success' : 'danger'}`;
+        
+        document.getElementById('detailLastCheck').textContent = formatTimestamp(m.collected_at);
+        
+        // Update metrics
+        updateDetailMetric('Cpu', m.cpu_percent);
+        updateDetailMetric('Memory', m.memory_percent);
+        updateDetailMetric('Storage', m.storage_percent);
+    }
+    
+    // Load chart with default 1 day
+    loadServerDetailChart(serverId, 1);
+    
+    modal.classList.add('active');
+}
+
+function updateDetailMetric(name, value) {
+    const cls = getMetricClass(value);
+    document.getElementById(`detail${name}`).textContent = `${formatPercent(value)}%`;
+    document.getElementById(`detail${name}`).className = `detail-metric-value ${cls}`;
+    document.getElementById(`detail${name}Bar`).style.width = `${Math.min(100, value)}%`;
+    document.getElementById(`detail${name}Bar`).className = `detail-metric-fill ${cls}`;
+}
+
+async function loadServerDetailChart(serverId, days) {
+    try {
+        const response = await fetch(`/api/servers/${serverId}/metrics?hours=${days * 24}`);
+        const data = await response.json();
+        
+        if (!data.success || !data.history || data.history.length === 0) {
+            showNoDataChart();
+            return;
+        }
+        
+        const history = data.history;
+        const labels = history.map(m => {
+            const date = new Date(m.collected_at);
+            if (days === 1) {
+                return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            } else {
+                return date.toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+            }
+        });
+        
+        const cpuData = history.map(m => m.cpu_percent);
+        const memData = history.map(m => m.memory_percent);
+        const diskData = history.map(m => m.storage_percent);
+        
+        renderChart(labels, cpuData, memData, diskData);
+    } catch (error) {
+        showNoDataChart();
+    }
+}
+
+function showNoDataChart() {
+    if (metricsChart) {
+        metricsChart.destroy();
+        metricsChart = null;
+    }
+    const ctx = document.getElementById('metricsChart').getContext('2d');
+    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+    ctx.font = '14px IBM Plex Sans';
+    ctx.fillStyle = '#8b949e';
+    ctx.textAlign = 'center';
+    ctx.fillText('No historical data available', ctx.canvas.width / 2, ctx.canvas.height / 2);
+}
+
+function renderChart(labels, cpuData, memData, diskData) {
+    const ctx = document.getElementById('metricsChart').getContext('2d');
+    
+    if (metricsChart) {
+        metricsChart.destroy();
+    }
+    
+    metricsChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: 'CPU',
+                    data: cpuData,
+                    borderColor: '#58a6ff',
+                    backgroundColor: 'rgba(88, 166, 255, 0.1)',
+                    fill: true,
+                    tension: 0.3
+                },
+                {
+                    label: 'Memory',
+                    data: memData,
+                    borderColor: '#3fb950',
+                    backgroundColor: 'rgba(63, 185, 80, 0.1)',
+                    fill: true,
+                    tension: 0.3
+                },
+                {
+                    label: 'Storage',
+                    data: diskData,
+                    borderColor: '#d29922',
+                    backgroundColor: 'rgba(210, 153, 34, 0.1)',
+                    fill: true,
+                    tension: 0.3
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'top',
+                    labels: {
+                        color: '#f0f6fc',
+                        font: { family: 'IBM Plex Sans' }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    ticks: { color: '#8b949e' },
+                    grid: { color: '#30363d' }
+                },
+                y: {
+                    min: 0,
+                    max: 100,
+                    ticks: { 
+                        color: '#8b949e',
+                        callback: (value) => value + '%'
+                    },
+                    grid: { color: '#30363d' }
+                }
+            }
+        }
+    });
+}
+
+function closeServerDetailModal() {
+    serverDetailModal.classList.remove('active');
+    currentDetailServerId = null;
+    if (metricsChart) {
+        metricsChart.destroy();
+        metricsChart = null;
+    }
+}

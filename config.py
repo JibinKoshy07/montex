@@ -21,4 +21,4 @@ class Config:
     DEFAULT_STORAGE_THRESHOLD = 90
     
     # Metrics history
-    METRICS_RETENTION_HOURS = 24
+    METRICS_RETENTION_HOURS = 24 * 7  # 7 days
