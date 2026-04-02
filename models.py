@@ -165,11 +165,13 @@ def get_metrics_history(server_id, hours=24):
     with get_db() as conn:
         cursor = conn.cursor()
         since = datetime.now() - timedelta(hours=hours)
+        # Format for SQLite: YYYY-MM-DD HH:MM:SS
+        since_str = since.strftime('%Y-%m-%d %H:%M:%S')
         cursor.execute('''
             SELECT * FROM metrics_history 
             WHERE server_id = ? AND collected_at > ?
             ORDER BY collected_at ASC
-        ''', (server_id, since.isoformat()))
+        ''', (server_id, since_str))
         return [dict(row) for row in cursor.fetchall()]
 
 def get_all_latest_metrics():
