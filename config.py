@@ -11,7 +11,7 @@ class Config:
     ENCRYPTION_KEY = os.environ.get('ENCRYPTION_KEY')
     
     # Metrics collection
-    METRICS_INTERVAL = int(os.environ.get('METRICS_INTERVAL', '60'))
+    METRICS_INTERVAL = int(os.environ.get('METRICS_INTERVAL', '5'))
     SSH_TIMEOUT = int(os.environ.get('SSH_TIMEOUT', '10'))
     SSH_RETRY = int(os.environ.get('SSH_RETRY', '3'))
     

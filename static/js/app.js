@@ -614,7 +614,7 @@ async function deleteServer(serverId) {
 function startAutoRefresh() {
     setInterval(() => {
         loadServers();
-    }, 60000); // 60 seconds
+    }, 5000); // 5 seconds
 }
 
 // Utility Functions
