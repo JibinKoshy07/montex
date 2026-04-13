@@ -194,7 +194,8 @@ def cleanup_old_metrics(hours=24):
     with get_db() as conn:
         cursor = conn.cursor()
         cutoff = datetime.now() - timedelta(hours=hours)
-        cursor.execute('DELETE FROM metrics_history WHERE collected_at < ?', (cutoff.isoformat(),))
+        # Use same format as get_metrics_history for consistent comparison
+        cursor.execute('DELETE FROM metrics_history WHERE collected_at < ?', (cutoff.strftime('%Y-%m-%d %H:%M:%S'),))
 
 def get_setting(key, default=None):
     """Get setting value"""
