@@ -122,10 +122,14 @@ class MetricsCollector:
     
     def check_thresholds(self, server, metrics, thresholds):
         '''Check if metric exceeds threshold based on datapoint count'''
+        logger.info(f"=== Checking thresholds for server: {server['name']} ===")
+        
         token = models.get_setting('telegram_token')
         chat_id = models.get_setting('telegram_chat_id')
+        logger.info(f"Telegram token: {'SET' if token else 'NOT SET'}, chat_id: {'SET' if chat_id else 'NOT SET'}")
         
         if not token or not chat_id:
+            logger.warning("Telegram not configured, skipping threshold check")
             return
         
         notifier = telegram_bot.TelegramNotifier(token, chat_id)
@@ -136,8 +140,10 @@ class MetricsCollector:
         cpu_eval_minutes = thresholds['cpu_evaluation_minutes']
         recent_cpu = models.get_metrics_in_minutes(server_id, cpu_eval_minutes)
         cpu_exceeds = sum(1 for m in recent_cpu if m['cpu_percent'] >= thresholds['cpu'])
+        logger.info(f"CPU: {len(recent_cpu)} datapoints in {cpu_eval_minutes} min, threshold={thresholds['cpu']}%")
         
         if cpu_exceeds >= cpu_datapoints:
+            logger.info(f"CPU alert triggered: {cpu_exceeds}/{cpu_datapoints} exceeded {thresholds['cpu']}%")
             notifier.send_threshold_alert(
                 server['name'], 'cpu', 
                 metrics['cpu_percent'], thresholds['cpu'],
@@ -149,8 +155,10 @@ class MetricsCollector:
         memory_eval_minutes = thresholds['memory_evaluation_minutes']
         recent_memory = models.get_metrics_in_minutes(server_id, memory_eval_minutes)
         memory_exceeds = sum(1 for m in recent_memory if m['memory_percent'] >= thresholds['memory'])
+        logger.info(f"Memory: {len(recent_memory)} datapoints in {memory_eval_minutes} min, threshold={thresholds['memory']}%")
         
         if memory_exceeds >= memory_datapoints:
+            logger.info(f"Memory alert triggered: {memory_exceeds}/{memory_datapoints} exceeded {thresholds['memory']}%")
             notifier.send_threshold_alert(
                 server['name'], 'memory',
                 metrics['memory_percent'], thresholds['memory'],
@@ -162,53 +170,13 @@ class MetricsCollector:
         storage_eval_minutes = thresholds['storage_evaluation_minutes']
         recent_storage = models.get_metrics_in_minutes(server_id, storage_eval_minutes)
         storage_exceeds = sum(1 for m in recent_storage if m['storage_percent'] >= thresholds['storage'])
+        logger.info(f"Storage: {len(recent_storage)} datapoints in {storage_eval_minutes} min, threshold={thresholds['storage']}%")
         
         if storage_exceeds >= storage_datapoints:
+            logger.info(f"Storage alert triggered: {storage_exceeds}/{storage_datapoints} exceeded {thresholds['storage']}%")
             notifier.send_threshold_alert(
                 server['name'], 'storage',
                 metrics['storage_percent'], thresholds['storage'],
                 f'{storage_exceeds}/{storage_datapoints} datapoints in {storage_eval_minutes} min'
             )
-    def notify_server_offline(self, server):
-        """Send server offline notification"""
-        token = models.get_setting('telegram_token')
-        chat_id = models.get_setting('telegram_chat_id')
-        
-        if token and chat_id:
-            notifier = telegram_bot.TelegramNotifier(token, chat_id)
-            notifier.send_server_offline(server['name'])
-    
-    def notify_server_online(self, server):
-        """Send server online notification"""
-        token = models.get_setting('telegram_token')
-        chat_id = models.get_setting('telegram_chat_id')
-        
-        if token and chat_id:
-            notifier = telegram_bot.TelegramNotifier(token, chat_id)
-            notifier.send_server_online(server['name'])
-    
-    def start(self):
-        """Start the metrics collector"""
-        if not self.running:
-            self.running = True
-            # Collect immediately
-            self.collect_all_metrics()
-            # Schedule periodic collection
-            self.scheduler.add_job(
-                self.collect_all_metrics,
-                'interval',
-                seconds=config.Config.METRICS_INTERVAL,
-                id='metrics_collection'
-            )
-            self.scheduler.start()
-            logger.info("Metrics collector started")
-    
-    def stop(self):
-        """Stop the metrics collector"""
-        if self.running:
-            self.scheduler.shutdown()
-            self.running = False
-            logger.info("Metrics collector stopped")
 
-# Global collector instance
-collector = MetricsCollector()
