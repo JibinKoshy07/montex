@@ -887,3 +887,27 @@ function closeServerDetailModal() {
         metricsChart = null;
     }
 }
+
+// Fetch alarm status for sidebar badge
+async function fetchAlarms() {
+    try {
+        const response = await fetch('/api/alarms');
+        const data = await response.json();
+        
+        const alarmBadge = document.getElementById('alarmBadge');
+        const alarmCount = document.getElementById('alarmCount');
+        
+        if (data.count > 0) {
+            alarmBadge.style.display = 'flex';
+            alarmCount.textContent = data.count;
+        } else {
+            alarmBadge.style.display = 'none';
+        }
+    } catch (error) {
+        console.error('Error fetching alarms:', error);
+    }
+}
+
+// Initialize alarm polling on page load
+fetchAlarms();
+setInterval(fetchAlarms, 30000); // Every 30 seconds

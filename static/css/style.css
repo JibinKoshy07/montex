@@ -50,6 +50,7 @@ body {
 
 /* Sidebar */
 .sidebar {
+    position: relative;
     width: 280px;
     background: var(--surface);
     border-right: 1px solid var(--border);
@@ -1177,4 +1178,27 @@ input[type="range"]::-webkit-slider-thumb:hover {
 
 .metric-settings .form-row {
     margin-top: 12px;
+}
+
+/* Alarm Badge */
+.alarm-badge {
+    position: absolute;
+    bottom: 80px;
+    left: 16px;
+    right: 16px;
+    background: #f85149;
+    color: white;
+    padding: 10px 16px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+    font-size: 14px;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.8; }
 }
