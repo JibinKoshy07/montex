@@ -53,6 +53,8 @@ class TelegramNotifier:
     
     def send_threshold_alert(self, server_name, metric, value, threshold, extra_info=None):
         '''Send threshold exceeded alert'''
+        logger.info(f"ALERT: {server_name} - {metric}={value}% exceeds threshold={threshold}%")
+        
         emoji = {
             'cpu': '💻',
             'memory': '🧠',
@@ -69,7 +71,10 @@ class TelegramNotifier:
         if extra_info:
             message += f'\n{extra_info}'
         
-        return self.send_message(message)
+        logger.info(f"Calling send_message with: {message[:80]}...")
+        result = self.send_message(message)
+        logger.info(f"send_message result: {result}")
+        return result
     
     def send_server_offline(self, server_name):
         """Send server offline notification"""
