@@ -390,13 +390,31 @@ function applySettings() {
         document.getElementById('cpuThreshold').value = settings.cpu_threshold;
         document.getElementById('cpuThresholdValue').textContent = settings.cpu_threshold;
     }
+    if (settings.cpu_datapoints) {
+        document.getElementById('cpuDatapoints').value = settings.cpu_datapoints;
+    }
+    if (settings.cpu_evaluation_minutes) {
+        document.getElementById('cpuEvaluationMinutes').value = settings.cpu_evaluation_minutes;
+    }
     if (settings.memory_threshold) {
         document.getElementById('memoryThreshold').value = settings.memory_threshold;
         document.getElementById('memoryThresholdValue').textContent = settings.memory_threshold;
     }
+    if (settings.memory_datapoints) {
+        document.getElementById('memoryDatapoints').value = settings.memory_datapoints;
+    }
+    if (settings.memory_evaluation_minutes) {
+        document.getElementById('memoryEvaluationMinutes').value = settings.memory_evaluation_minutes;
+    }
     if (settings.storage_threshold) {
         document.getElementById('storageThreshold').value = settings.storage_threshold;
         document.getElementById('storageThresholdValue').textContent = settings.storage_threshold;
+    }
+    if (settings.storage_datapoints) {
+        document.getElementById('storageDatapoints').value = settings.storage_datapoints;
+    }
+    if (settings.storage_evaluation_minutes) {
+        document.getElementById('storageEvaluationMinutes').value = settings.storage_evaluation_minutes;
     }
 }
 
@@ -404,9 +422,18 @@ async function saveSettings() {
     const data = {
         telegram_token: document.getElementById('telegramToken').value,
         telegram_chat_id: document.getElementById('telegramChatId').value,
+        // CPU settings
         cpu_threshold: parseInt(document.getElementById('cpuThreshold').value),
+        cpu_datapoints: parseInt(document.getElementById('cpuDatapoints').value),
+        cpu_evaluation_minutes: parseInt(document.getElementById('cpuEvaluationMinutes').value),
+        // Memory settings
         memory_threshold: parseInt(document.getElementById('memoryThreshold').value),
-        storage_threshold: parseInt(document.getElementById('storageThreshold').value)
+        memory_datapoints: parseInt(document.getElementById('memoryDatapoints').value),
+        memory_evaluation_minutes: parseInt(document.getElementById('memoryEvaluationMinutes').value),
+        // Storage settings
+        storage_threshold: parseInt(document.getElementById('storageThreshold').value),
+        storage_datapoints: parseInt(document.getElementById('storageDatapoints').value),
+        storage_evaluation_minutes: parseInt(document.getElementById('storageEvaluationMinutes').value)
     };
     
     try {

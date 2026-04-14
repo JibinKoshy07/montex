@@ -208,21 +208,69 @@
                     
                     <div class="settings-section">
                         <h2>Alert Thresholds</h2>
-                        <p class="section-desc">Set threshold values for CPU, Memory, and Storage metrics.</p>
+                        <p class="section-desc">Set threshold values and evaluation periods for CPU, Memory, and Storage metrics.</p>
                         
-                        <div class="form-group">
-                            <label for="cpuThreshold">CPU Threshold: <span id="cpuThresholdValue">80</span>%</label>
-                            <input type="range" id="cpuThreshold" min="50" max="100" value="80">
+                        <!-- CPU Settings -->
+                        <div class="metric-settings">
+                            <h3>💻 CPU</h3>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="cpuThreshold">Threshold: <span id="cpuThresholdValue">80</span>%</label>
+                                    <input type="range" id="cpuThreshold" min="50" max="100" value="80">
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="cpuDatapoints">Datapoints</label>
+                                    <input type="number" id="cpuDatapoints" min="1" max="60" value="5">
+                                </div>
+                                <div class="form-group">
+                                    <label for="cpuEvaluationMinutes">Evaluation (minutes)</label>
+                                    <input type="number" id="cpuEvaluationMinutes" min="1" max="60" value="5">
+                                </div>
+                            </div>
                         </div>
                         
-                        <div class="form-group">
-                            <label for="memoryThreshold">Memory Threshold: <span id="memoryThresholdValue">85</span>%</label>
-                            <input type="range" id="memoryThreshold" min="50" max="100" value="85">
+                        <!-- Memory Settings -->
+                        <div class="metric-settings">
+                            <h3>🧠 Memory</h3>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="memoryThreshold">Threshold: <span id="memoryThresholdValue">85</span>%</label>
+                                    <input type="range" id="memoryThreshold" min="50" max="100" value="85">
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="memoryDatapoints">Datapoints</label>
+                                    <input type="number" id="memoryDatapoints" min="1" max="60" value="5">
+                                </div>
+                                <div class="form-group">
+                                    <label for="memoryEvaluationMinutes">Evaluation (minutes)</label>
+                                    <input type="number" id="memoryEvaluationMinutes" min="1" max="60" value="5">
+                                </div>
+                            </div>
                         </div>
                         
-                        <div class="form-group">
-                            <label for="storageThreshold">Storage Threshold: <span id="storageThresholdValue">90</span>%</label>
-                            <input type="range" id="storageThreshold" min="50" max="100" value="90">
+                        <!-- Storage Settings -->
+                        <div class="metric-settings">
+                            <h3>💾 Storage</h3>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="storageThreshold">Threshold: <span id="storageThresholdValue">90</span>%</label>
+                                    <input type="range" id="storageThreshold" min="50" max="100" value="90">
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="storageDatapoints">Datapoints</label>
+                                    <input type="number" id="storageDatapoints" min="1" max="60" value="5">
+                                </div>
+                                <div class="form-group">
+                                    <label for="storageEvaluationMinutes">Evaluation (minutes)</label>
+                                    <input type="number" id="storageEvaluationMinutes" min="1" max="60" value="5">
+                                </div>
+                            </div>
                         </div>
                     </div>
                     
