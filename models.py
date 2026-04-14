@@ -102,7 +102,43 @@ def init_db():
             )
         ''')
         
+        # Users table (for login)
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS users (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                username TEXT UNIQUE NOT NULL,
+                password_hash TEXT NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+        
         conn.commit()
+
+def create_user(username, password):
+    """Create a new user with hashed password"""
+    password_hash = hashlib.sha256(password.encode()).hexdigest()
+    with get_db() as conn:
+        cursor = conn.cursor()
+        try:
+            cursor.execute('''
+                INSERT INTO users (username, password_hash)
+                VALUES (?, ?)
+            ''', (username, password_hash))
+            conn.commit()
+            return True
+        except:
+            return False
+
+def verify_user(username, password):
+    """Verify user credentials"""
+    password_hash = hashlib.sha256(password.encode()).hexdigest()
+    with get_db() as conn:
+        cursor = conn.cursor()
+        cursor.execute('''
+            SELECT id FROM users 
+            WHERE username = ? AND password_hash = ?
+        ''', (username, password_hash))
+        return cursor.fetchone() is not None
 
 def get_all_servers():
     """Get all servers"""

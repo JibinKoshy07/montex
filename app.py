@@ -1,4 +1,5 @@
-from flask import Flask, render_template, jsonify, request
+from flask import Flask, render_template, jsonify, request, session, redirect, url_for
+from functools import wraps
 import models
 import ssh_client
 import encryptor
@@ -8,6 +9,7 @@ import config
 import json
 import logging
 import logging.handlers
+import hashlib
 
 # Setup logging to file
 logging.basicConfig(
@@ -21,13 +23,55 @@ logging.basicConfig(
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = config.Config.SECRET_KEY
+app.secret_key = config.Config.SECRET_KEY
+
+# Login required decorator
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'user_id' not in session:
+            return redirect(url_for('login'))
+        return f(*args, **kwargs)
+    return decorated_function
+
+@app.route('/login')
+def login():
+    """Login page"""
+    if 'user_id' in session:
+        return redirect(url_for('index'))
+    return render_template('login.html')
+
+@app.route('/api/login', methods=['POST'])
+def api_login():
+    """API login"""
+    data = request.json
+    username = data.get('username', '').strip()
+    password = data.get('password', '')
+    
+    if not username or not password:
+        return jsonify({'success': False, 'message': 'Username and password required'})
+    
+    if models.verify_user(username, password):
+        session['user_id'] = username
+        session.permanent = True
+        return jsonify({'success': True})
+    
+    return jsonify({'success': False, 'message': 'Invalid credentials'})
+
+@app.route('/logout')
+def logout():
+    """Logout"""
+    session.clear()
+    return redirect(url_for('login'))
 
 @app.route('/')
+@login_required
 def index():
     """Main dashboard"""
     return render_template('index.html')
 
 @app.route('/api/servers', methods=['GET'])
+@login_required
 def get_servers():
     """Get all servers"""
     servers = models.get_all_servers()
@@ -40,6 +84,7 @@ def get_servers():
     return jsonify(servers)
 
 @app.route('/api/servers', methods=['POST'])
+@login_required
 def add_server():
     """Add new server"""
     data = request.json
@@ -74,6 +119,7 @@ def add_server():
     return jsonify({'success': True, 'server_id': server_id})
 
 @app.route('/api/servers/<int:server_id>', methods=['PUT'])
+@login_required
 def update_server(server_id):
     """Update server"""
     data = request.json
@@ -133,6 +179,7 @@ def get_server_metrics(server_id):
     })
 
 @app.route('/api/test-connection', methods=['POST'])
+@login_required
 def test_connection():
     """Test SSH connection"""
     data = request.json
@@ -156,6 +203,7 @@ def test_connection():
     return jsonify(result)
 
 @app.route('/api/settings', methods=['GET'])
+@login_required
 def get_settings():
     """Get all settings"""
     settings = models.get_all_settings()
@@ -167,6 +215,7 @@ def get_settings():
     return jsonify(settings)
 
 @app.route('/api/settings', methods=['POST'])
+@login_required
 def update_settings():
     """Update settings"""
     data = request.json
@@ -215,6 +264,7 @@ def update_settings():
     return jsonify({'success': True})
 
 @app.route('/api/test-telegram', methods=['POST'])
+@login_required
 def test_telegram():
     """Test Telegram notification"""
     data = request.json
@@ -231,12 +281,14 @@ def test_telegram():
     return jsonify(result)
 
 @app.route('/api/alerts', methods=['GET'])
+@login_required
 def get_alerts():
     """Get unresolved alerts"""
     alerts = models.get_unresolved_alerts()
     return jsonify(alerts)
 
 @app.route('/api/alarms', methods=['GET'])
+@login_required
 def get_alarms():
     """Get all alarm states for UI sidebar"""
     alarms = models.get_all_alarm_states()
@@ -250,6 +302,18 @@ def init_app():
     # Initialize database
     models.init()
     
+    # Create default admin user if none exists
+    import logging
+    logger = logging.getLogger(__name__)
+    with models.get_db() as conn:
+        cursor = conn.cursor()
+        cursor.execute('SELECT COUNT(*) FROM users')
+        count = cursor.fetchone()[0]
+        if count == 0:
+            # Create default admin user
+            models.create_user('admin', 'admin123')
+            logger.info('Created default admin user')
+
     # Start metrics collector
     metrics_collector.collector.start()
 
