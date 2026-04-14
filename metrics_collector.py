@@ -57,6 +57,7 @@ class MetricsCollector:
                 storage_total=result['storage_total'],
                 is_online=1
             )
+            logger.info(f"Metrics saved: CPU={result['cpu_percent']}%, Memory={result['memory_percent']}%, Storage={result['storage_percent']}%")
             
             # Check thresholds
             self.check_thresholds(server, result, thresholds)
@@ -105,7 +106,7 @@ class MetricsCollector:
         
     def get_thresholds(self):
         '''Get current thresholds from settings'''
-        return {
+        thresholds = {
             'cpu': int(models.get_setting('cpu_threshold', config.Config.DEFAULT_CPU_THRESHOLD)),
             'memory': int(models.get_setting('memory_threshold', config.Config.DEFAULT_MEMORY_THRESHOLD)),
             'storage': int(models.get_setting('storage_threshold', config.Config.DEFAULT_STORAGE_THRESHOLD)),
@@ -119,6 +120,8 @@ class MetricsCollector:
             'storage_datapoints': int(models.get_setting('storage_datapoints', config.Config.DEFAULT_STORAGE_DATAPOINTS)),
             'storage_evaluation_minutes': int(models.get_setting('storage_evaluation_minutes', config.Config.DEFAULT_STORAGE_EVALUATION_MINUTES)),
         }
+        logger.info(f"Loaded thresholds from DB: {thresholds}")
+        return thresholds
     
     def check_thresholds(self, server, metrics, thresholds):
         '''Check if metric exceeds threshold based on datapoint count'''
