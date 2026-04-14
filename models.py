@@ -173,6 +173,18 @@ def get_metrics_history(server_id, hours=24):
             ORDER BY collected_at ASC
         ''', (server_id, since_str))
         return [dict(row) for row in cursor.fetchall()]
+def get_metrics_in_minutes(server_id, minutes):
+    '''Get metrics within the last N minutes'''
+    with get_db() as conn:
+        cursor = conn.cursor()
+        since = datetime.now() - timedelta(minutes=minutes)
+        since_str = since.strftime('%Y-%m-%d %H:%M:%S')
+        cursor.execute('''
+            SELECT * FROM metrics_history 
+            WHERE server_id = ? AND collected_at > ?
+            ORDER BY collected_at DESC
+        ''', (server_id, since_str))
+        return [dict(row) for row in cursor.fetchall()]
 
 def get_all_latest_metrics():
     """Get latest metrics for all servers"""

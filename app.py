@@ -178,6 +178,13 @@ def update_settings():
     if 'storage_threshold' in data:
         models.set_setting('storage_threshold', str(data['storage_threshold']))
     
+    # Datapoint evaluation settings (like CloudWatch)
+    if 'datapoints' in data:
+        models.set_setting('datapoints', str(data['datapoints']))
+    
+    if 'evaluation_minutes' in data:
+        models.set_setting('evaluation_minutes', str(data['evaluation_minutes']))
+    
     return jsonify({'success': True})
 
 @app.route('/api/test-telegram', methods=['POST'])

@@ -102,17 +102,19 @@ class MetricsCollector:
         
         # Cleanup old metrics
         models.cleanup_old_metrics(config.Config.METRICS_RETENTION_HOURS)
-    
+
     def get_thresholds(self):
-        """Get current thresholds from settings"""
+        '''Get current thresholds from settings'''
         return {
             'cpu': int(models.get_setting('cpu_threshold', config.Config.DEFAULT_CPU_THRESHOLD)),
             'memory': int(models.get_setting('memory_threshold', config.Config.DEFAULT_MEMORY_THRESHOLD)),
-            'storage': int(models.get_setting('storage_threshold', config.Config.DEFAULT_STORAGE_THRESHOLD))
+            'storage': int(models.get_setting('storage_threshold', config.Config.DEFAULT_STORAGE_THRESHOLD)),
+            'datapoints': int(models.get_setting('datapoints', config.Config.DEFAULT_DATAPOINTS)),
+            'evaluation_minutes': int(models.get_setting('evaluation_minutes', config.Config.DEFAULT_EVALUATION_MINUTES))
         }
     
     def check_thresholds(self, server, metrics, thresholds):
-        """Check if any metric exceeds threshold"""
+        '''Check if metric exceeds threshold based on datapoint count'''
         token = models.get_setting('telegram_token')
         chat_id = models.get_setting('telegram_chat_id')
         
@@ -121,27 +123,40 @@ class MetricsCollector:
         
         notifier = telegram_bot.TelegramNotifier(token, chat_id)
         
-        # Check CPU
-        if metrics['cpu_percent'] >= thresholds['cpu']:
+        # Get recent metrics for evaluation
+        server_id = server['id']
+        datapoints = thresholds['datapoints']
+        evaluation_minutes = thresholds['evaluation_minutes']
+        
+        # Get metrics in the evaluation period
+        recent_metrics = models.get_metrics_in_minutes(server_id, evaluation_minutes)
+        
+        # Count how many datapoints exceed threshold for each metric
+        cpu_exceeds = sum(1 for m in recent_metrics if m['cpu_percent'] >= thresholds['cpu'])
+        memory_exceeds = sum(1 for m in recent_metrics if m['memory_percent'] >= thresholds['memory'])
+        storage_exceeds = sum(1 for m in recent_metrics if m['storage_percent'] >= thresholds['storage'])
+        
+        # Only notify if required datapoints exceed threshold
+        if cpu_exceeds >= datapoints:
             notifier.send_threshold_alert(
                 server['name'], 'cpu', 
-                metrics['cpu_percent'], thresholds['cpu']
+                metrics['cpu_percent'], thresholds['cpu'],
+                f'{cpu_exceeds}/{datapoints} datapoints in {evaluation_minutes} min'
             )
         
-        # Check Memory
-        if metrics['memory_percent'] >= thresholds['memory']:
+        if memory_exceeds >= datapoints:
             notifier.send_threshold_alert(
                 server['name'], 'memory',
-                metrics['memory_percent'], thresholds['memory']
+                metrics['memory_percent'], thresholds['memory'],
+                f'{memory_exceeds}/{datapoints} datapoints in {evaluation_minutes} min'
             )
         
-        # Check Storage
-        if metrics['storage_percent'] >= thresholds['storage']:
+        if storage_exceeds >= datapoints:
             notifier.send_threshold_alert(
                 server['name'], 'storage',
-                metrics['storage_percent'], thresholds['storage']
+                metrics['storage_percent'], thresholds['storage'],
+                f'{storage_exceeds}/{datapoints} datapoints in {evaluation_minutes} min'
             )
-    
     def notify_server_offline(self, server):
         """Send server offline notification"""
         token = models.get_setting('telegram_token')

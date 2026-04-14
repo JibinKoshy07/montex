@@ -45,8 +45,9 @@ class TelegramNotifier:
         message = "🔔 <b>Montex Test Notification</b>\n\nYour Telegram notifications are configured correctly!"
         return self.send_message(message)
     
-    def send_threshold_alert(self, server_name, metric, value, threshold):
-        """Send threshold exceeded alert"""
+    
+    def send_threshold_alert(self, server_name, metric, value, threshold, extra_info=None):
+        '''Send threshold exceeded alert'''
         emoji = {
             'cpu': '💻',
             'memory': '🧠',
@@ -54,11 +55,14 @@ class TelegramNotifier:
         }
         
         icon = emoji.get(metric, '⚠️')
-        message = f"{icon} <b>Threshold Alert</b>\n\n"
-        message += f"Server: <b>{server_name}</b>\n"
-        message += f"Metric: {metric.upper()}\n"
-        message += f"Current: <b>{value}%</b>\n"
-        message += f"Threshold: {threshold}%"
+        message = f'{icon} <b>Threshold Alert</b>\n\n'
+        message += f'Server: <b>{server_name}</b>\n'
+        message += f'Metric: {metric.upper()}\n'
+        message += f'Current: <b>{value}%</b>\n'
+        message += f'Threshold: {threshold}%'
+        
+        if extra_info:
+            message += f'\n{extra_info}'
         
         return self.send_message(message)
     
