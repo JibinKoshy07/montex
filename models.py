@@ -72,14 +72,6 @@ def init_db():
             ON metrics_history (server_id, collected_at)
         ''')
         
-        # Settings table
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS settings (
-                key TEXT PRIMARY KEY,
-                value TEXT
-            )
-        ''')
-        
         # Alerts table
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS alerts (
