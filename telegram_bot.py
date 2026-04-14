@@ -91,6 +91,27 @@ class TelegramNotifier:
         message += "Status: Connection restored"
         
         return self.send_message(message)
+    
+    def send_alarm_state(self, server_name, metric, state, threshold, current_value):
+        """Send CloudWatch-style alarm state notification (ALARM or OK)"""
+        if state == 'ALARM':
+            icon = '🔴'
+            title = 'ALARM'
+            color = 'red'
+        else:
+            icon = '🟢'
+            title = 'OK'
+            color = 'green'
+        
+        message = f'{icon} <b>{title}</b>\n\n'
+        message += f'Server: <b>{server_name}</b>\n'
+        message += f'Metric: <b>{metric.upper()}</b>\n'
+        message += f'State: <b>{state}</b>\n'
+        message += f'Current: {current_value}%\n'
+        message += f'Threshold: {threshold}%'
+        
+        logger.info(f"send_alarm_state: {server_name} {metric} = {state}")
+        return self.send_message(message)
 
 def send_telegram_notification(token, chat_id, message):
     """Send a simple notification"""

@@ -124,7 +124,7 @@ class MetricsCollector:
         return thresholds
     
     def check_thresholds(self, server, metrics, thresholds):
-        '''Check if metric exceeds threshold based on datapoint count'''
+        '''Check if metric exceeds threshold based on CloudWatch-style evaluation'''
         logger.info(f"=== Checking thresholds for server: {server['name']} ===")
         
         token = models.get_setting('telegram_token')
@@ -136,52 +136,58 @@ class MetricsCollector:
             return
         
         notifier = telegram_bot.TelegramNotifier(token, chat_id)
-        
-        # Get recent metrics for CPU evaluation
         server_id = server['id']
+        
+        # Evaluate each metric (CloudWatch-style: ALARM or OK)
+        evaluations = {}
+        
+        # CPU evaluation
         cpu_datapoints = thresholds['cpu_datapoints']
         cpu_eval_minutes = thresholds['cpu_evaluation_minutes']
         recent_cpu = models.get_metrics_in_minutes(server_id, cpu_eval_minutes)
         cpu_exceeds = sum(1 for m in recent_cpu if m['cpu_percent'] >= thresholds['cpu'])
-        logger.info(f"CPU: {len(recent_cpu)} datapoints in {cpu_eval_minutes} min, threshold={thresholds['cpu']}%")
-        
-        if cpu_exceeds >= cpu_datapoints:
-            logger.info(f"CPU alert triggered: {cpu_exceeds}/{cpu_datapoints} exceeded {thresholds['cpu']}%")
-            notifier.send_threshold_alert(
-                server['name'], 'cpu', 
-                metrics['cpu_percent'], thresholds['cpu'],
-                f'{cpu_exceeds}/{cpu_datapoints} datapoints in {cpu_eval_minutes} min'
-            )
+        in_alarm_cpu = cpu_exceeds >= cpu_datapoints
+        evaluations['cpu'] = in_alarm_cpu
+        logger.info(f"CPU: {cpu_exceeds}/{cpu_datapoints} datapoints exceed {thresholds['cpu']}% -> {'ALARM' if in_alarm_cpu else 'OK'}")
         
         # Memory evaluation
         memory_datapoints = thresholds['memory_datapoints']
         memory_eval_minutes = thresholds['memory_evaluation_minutes']
         recent_memory = models.get_metrics_in_minutes(server_id, memory_eval_minutes)
         memory_exceeds = sum(1 for m in recent_memory if m['memory_percent'] >= thresholds['memory'])
-        logger.info(f"Memory: {len(recent_memory)} datapoints in {memory_eval_minutes} min, threshold={thresholds['memory']}%")
+        in_alarm_memory = memory_exceeds >= memory_datapoints
+        evaluations['memory'] = in_alarm_memory
+        logger.info(f"Memory: {memory_exceeds}/{memory_datapoints} datapoints exceed {thresholds['memory']}% -> {'ALARM' if in_alarm_memory else 'OK'}")
         
-        if memory_exceeds >= memory_datapoints:
-            logger.info(f"Memory alert triggered: {memory_exceeds}/{memory_datapoints} exceeded {thresholds['memory']}%")
-            notifier.send_threshold_alert(
-                server['name'], 'memory',
-                metrics['memory_percent'], thresholds['memory'],
-                f'{memory_exceeds}/{memory_datapoints} datapoints in {memory_eval_minutes} min'
-            )
-        
-        # Storage evaluation
+        # Storage evaluation  
         storage_datapoints = thresholds['storage_datapoints']
         storage_eval_minutes = thresholds['storage_evaluation_minutes']
         recent_storage = models.get_metrics_in_minutes(server_id, storage_eval_minutes)
         storage_exceeds = sum(1 for m in recent_storage if m['storage_percent'] >= thresholds['storage'])
-        logger.info(f"Storage: {len(recent_storage)} datapoints in {storage_eval_minutes} min, threshold={thresholds['storage']}%")
+        in_alarm_storage = storage_exceeds >= storage_datapoints
+        evaluations['storage'] = in_alarm_storage
+        logger.info(f"Storage: {storage_exceeds}/{storage_datapoints} datapoints exceed {thresholds['storage']}% -> {'ALARM' if in_alarm_storage else 'OK'}")
         
-        if storage_exceeds >= storage_datapoints:
-            logger.info(f"Storage alert triggered: {storage_exceeds}/{storage_datapoints} exceeded {thresholds['storage']}%")
-            notifier.send_threshold_alert(
-                server['name'], 'storage',
-                metrics['storage_percent'], thresholds['storage'],
-                f'{storage_exceeds}/{storage_datapoints} datapoints in {storage_eval_minutes} min'
-            )
+        # Check state changes and notify only on transition (CloudWatch-style)
+        for metric, in_alarm in evaluations.items():
+            old_state = models.get_alarm_state(server_id, metric)
+            new_state = 'ALARM' if in_alarm else 'OK'
+            
+            if old_state != new_state:
+                logger.info(f"State change: {server['name']} {metric.upper()}: {old_state} -> {new_state}")
+                # Save new state
+                models.set_alarm_state(server_id, metric, new_state)
+                
+                if new_state == 'ALARM':
+                    notifier.send_alarm_state(
+                        server['name'], metric, 'ALARM',
+                        thresholds[metric], metrics[f'{metric}_percent']
+                    )
+                else:
+                    notifier.send_alarm_state(
+                        server['name'], metric, 'OK',
+                        thresholds[metric], metrics[f'{metric}_percent']
+                    )
 
     def start(self):
         """Start the metrics collector"""

@@ -89,6 +89,19 @@ def init_db():
             )
         ''')
         
+        # Alarm states table (CloudWatch-style)
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS alarm_states (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                server_id INTEGER NOT NULL,
+                metric TEXT NOT NULL,
+                state TEXT NOT NULL,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (server_id) REFERENCES servers (id) ON DELETE CASCADE,
+                UNIQUE(server_id, metric)
+            )
+        ''')
+        
         conn.commit()
 
 def get_all_servers():
@@ -254,6 +267,28 @@ def save_alert(server_id, alert_type, metric, threshold, actual_value, message):
             INSERT INTO alerts (server_id, alert_type, metric, threshold, actual_value, message)
             VALUES (?, ?, ?, ?, ?, ?)
         ''', (server_id, alert_type, metric, threshold, actual_value, message))
+
+def get_alarm_state(server_id, metric):
+    """Get current alarm state for a metric (CloudWatch-style)"""
+    with get_db() as conn:
+        cursor = conn.cursor()
+        cursor.execute('''
+            SELECT state FROM alarm_states 
+            WHERE server_id = ? AND metric = ?
+        ''', (server_id, metric))
+        row = cursor.fetchone()
+        return row['state'] if row else None
+
+def set_alarm_state(server_id, metric, state):
+    """Set alarm state for a metric (CloudWatch-style)"""
+    with get_db() as conn:
+        cursor = conn.cursor()
+        cursor.execute('''
+            INSERT INTO alarm_states (server_id, metric, state, updated_at)
+            VALUES (?, ?, ?, CURRENT_TIMESTAMP)
+            ON CONFLICT(server_id, metric) DO UPDATE SET state = excluded.state, updated_at = CURRENT_TIMESTAMP
+        ''', (server_id, metric, state))
+        conn.commit()
 
 def get_unresolved_alerts():
     """Get unresolved alerts"""
