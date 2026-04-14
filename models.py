@@ -179,7 +179,10 @@ def get_metrics_history(server_id, hours=24):
     """Get metrics history for a server"""
     with get_db() as conn:
         cursor = conn.cursor()
-        since = datetime.now() - timedelta(hours=hours)
+        # Use UTC consistently
+        from datetime import datetime, timezone, timedelta
+        now_utc = datetime.now(timezone.utc)
+        since = now_utc - timedelta(hours=hours)
         # Format for SQLite: YYYY-MM-DD HH:MM:SS
         since_str = since.strftime('%Y-%m-%d %H:%M:%S')
         cursor.execute('''
