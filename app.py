@@ -178,12 +178,27 @@ def update_settings():
     if 'storage_threshold' in data:
         models.set_setting('storage_threshold', str(data['storage_threshold']))
     
-    # Datapoint evaluation settings (like CloudWatch)
-    if 'datapoints' in data:
-        models.set_setting('datapoints', str(data['datapoints']))
     
-    if 'evaluation_minutes' in data:
-        models.set_setting('evaluation_minutes', str(data['evaluation_minutes']))
+    # Per-metric datapoint evaluation settings (like CloudWatch)
+    # CPU
+    if 'cpu_datapoints' in data:
+        models.set_setting('cpu_datapoints', str(data['cpu_datapoints']))
+    if 'cpu_evaluation_minutes' in data:
+        models.set_setting('cpu_evaluation_minutes', str(data['cpu_evaluation_minutes']))
+    
+    # Memory
+    if 'memory_datapoints' in data:
+        models.set_setting('memory_datapoints', str(data['memory_datapoints']))
+    if 'memory_evaluation_minutes' in data:
+        models.set_setting('memory_evaluation_minutes', str(data['memory_evaluation_minutes']))
+    
+    # Storage
+    if 'storage_datapoints' in data:
+        models.set_setting('storage_datapoints', str(data['storage_datapoints']))
+    if 'storage_evaluation_minutes' in data:
+        models.set_setting('storage_evaluation_minutes', str(data['storage_evaluation_minutes']))
+    
+    return jsonify({'success': True})
     
     return jsonify({'success': True})
 

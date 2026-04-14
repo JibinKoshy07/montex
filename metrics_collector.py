@@ -102,15 +102,22 @@ class MetricsCollector:
         
         # Cleanup old metrics
         models.cleanup_old_metrics(config.Config.METRICS_RETENTION_HOURS)
-
+        
     def get_thresholds(self):
         '''Get current thresholds from settings'''
         return {
             'cpu': int(models.get_setting('cpu_threshold', config.Config.DEFAULT_CPU_THRESHOLD)),
             'memory': int(models.get_setting('memory_threshold', config.Config.DEFAULT_MEMORY_THRESHOLD)),
             'storage': int(models.get_setting('storage_threshold', config.Config.DEFAULT_STORAGE_THRESHOLD)),
-            'datapoints': int(models.get_setting('datapoints', config.Config.DEFAULT_DATAPOINTS)),
-            'evaluation_minutes': int(models.get_setting('evaluation_minutes', config.Config.DEFAULT_EVALUATION_MINUTES))
+            # CPU evaluation settings
+            'cpu_datapoints': int(models.get_setting('cpu_datapoints', config.Config.DEFAULT_CPU_DATAPOINTS)),
+            'cpu_evaluation_minutes': int(models.get_setting('cpu_evaluation_minutes', config.Config.DEFAULT_CPU_EVALUATION_MINUTES)),
+            # Memory evaluation settings
+            'memory_datapoints': int(models.get_setting('memory_datapoints', config.Config.DEFAULT_MEMORY_DATAPOINTS)),
+            'memory_evaluation_minutes': int(models.get_setting('memory_evaluation_minutes', config.Config.DEFAULT_MEMORY_EVALUATION_MINUTES)),
+            # Storage evaluation settings
+            'storage_datapoints': int(models.get_setting('storage_datapoints', config.Config.DEFAULT_STORAGE_DATAPOINTS)),
+            'storage_evaluation_minutes': int(models.get_setting('storage_evaluation_minutes', config.Config.DEFAULT_STORAGE_EVALUATION_MINUTES)),
         }
     
     def check_thresholds(self, server, metrics, thresholds):
@@ -123,39 +130,44 @@ class MetricsCollector:
         
         notifier = telegram_bot.TelegramNotifier(token, chat_id)
         
-        # Get recent metrics for evaluation
+        # Get recent metrics for CPU evaluation
         server_id = server['id']
-        datapoints = thresholds['datapoints']
-        evaluation_minutes = thresholds['evaluation_minutes']
+        cpu_datapoints = thresholds['cpu_datapoints']
+        cpu_eval_minutes = thresholds['cpu_evaluation_minutes']
+        recent_cpu = models.get_metrics_in_minutes(server_id, cpu_eval_minutes)
+        cpu_exceeds = sum(1 for m in recent_cpu if m['cpu_percent'] >= thresholds['cpu'])
         
-        # Get metrics in the evaluation period
-        recent_metrics = models.get_metrics_in_minutes(server_id, evaluation_minutes)
-        
-        # Count how many datapoints exceed threshold for each metric
-        cpu_exceeds = sum(1 for m in recent_metrics if m['cpu_percent'] >= thresholds['cpu'])
-        memory_exceeds = sum(1 for m in recent_metrics if m['memory_percent'] >= thresholds['memory'])
-        storage_exceeds = sum(1 for m in recent_metrics if m['storage_percent'] >= thresholds['storage'])
-        
-        # Only notify if required datapoints exceed threshold
-        if cpu_exceeds >= datapoints:
+        if cpu_exceeds >= cpu_datapoints:
             notifier.send_threshold_alert(
                 server['name'], 'cpu', 
                 metrics['cpu_percent'], thresholds['cpu'],
-                f'{cpu_exceeds}/{datapoints} datapoints in {evaluation_minutes} min'
+                f'{cpu_exceeds}/{cpu_datapoints} datapoints in {cpu_eval_minutes} min'
             )
         
-        if memory_exceeds >= datapoints:
+        # Memory evaluation
+        memory_datapoints = thresholds['memory_datapoints']
+        memory_eval_minutes = thresholds['memory_evaluation_minutes']
+        recent_memory = models.get_metrics_in_minutes(server_id, memory_eval_minutes)
+        memory_exceeds = sum(1 for m in recent_memory if m['memory_percent'] >= thresholds['memory'])
+        
+        if memory_exceeds >= memory_datapoints:
             notifier.send_threshold_alert(
                 server['name'], 'memory',
                 metrics['memory_percent'], thresholds['memory'],
-                f'{memory_exceeds}/{datapoints} datapoints in {evaluation_minutes} min'
+                f'{memory_exceeds}/{memory_datapoints} datapoints in {memory_eval_minutes} min'
             )
         
-        if storage_exceeds >= datapoints:
+        # Storage evaluation
+        storage_datapoints = thresholds['storage_datapoints']
+        storage_eval_minutes = thresholds['storage_evaluation_minutes']
+        recent_storage = models.get_metrics_in_minutes(server_id, storage_eval_minutes)
+        storage_exceeds = sum(1 for m in recent_storage if m['storage_percent'] >= thresholds['storage'])
+        
+        if storage_exceeds >= storage_datapoints:
             notifier.send_threshold_alert(
                 server['name'], 'storage',
                 metrics['storage_percent'], thresholds['storage'],
-                f'{storage_exceeds}/{datapoints} datapoints in {evaluation_minutes} min'
+                f'{storage_exceeds}/{storage_datapoints} datapoints in {storage_eval_minutes} min'
             )
     def notify_server_offline(self, server):
         """Send server offline notification"""

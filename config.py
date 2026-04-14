@@ -20,10 +20,16 @@ class Config:
     DEFAULT_MEMORY_THRESHOLD = 85
     DEFAULT_STORAGE_THRESHOLD = 90
     
-    # Default alarm evaluation (like CloudWatch)
+    # Default alarm evaluation (like CloudWatch) - per metric
     # Only trigger notification if N datapoints exceed threshold within M minutes
-    DEFAULT_DATAPOINTS = 5
-    DEFAULT_EVALUATION_MINUTES = 5
+    DEFAULT_CPU_DATAPOINTS = 5
+    DEFAULT_CPU_EVALUATION_MINUTES = 5
+    
+    DEFAULT_MEMORY_DATAPOINTS = 5
+    DEFAULT_MEMORY_EVALUATION_MINUTES = 5
+    
+    DEFAULT_STORAGE_DATAPOINTS = 5
+    DEFAULT_STORAGE_EVALUATION_MINUTES = 5
     
     # Metrics history
     METRICS_RETENTION_HOURS = 24 * 7  # 7 days
