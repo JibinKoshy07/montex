@@ -22,6 +22,13 @@ def init_db():
     """Initialize database tables"""
     with get_db() as conn:
         cursor = conn.cursor()
+        # Settings table
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS settings (
+                key TEXT PRIMARY KEY,
+                value TEXT
+            )
+        ''')
         
         # Servers table
         cursor.execute('''
