@@ -141,6 +141,19 @@ def verify_user(username, password):
         ''', (username, password_hash))
         return cursor.fetchone() is not None
 
+def change_password(username, old_password, new_password):
+    """Change user password"""
+    if not verify_user(username, old_password):
+        return False
+    new_hash = hashlib.sha256(new_password.encode()).hexdigest()
+    with get_db() as conn:
+        cursor = conn.cursor()
+        cursor.execute('''
+            UPDATE users SET password_hash = ? WHERE username = ?
+        ''', (new_hash, username))
+        conn.commit()
+        return cursor.rowcount > 0
+
 def get_all_servers():
     """Get all servers"""
     with get_db() as conn:

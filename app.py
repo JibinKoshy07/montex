@@ -58,6 +58,23 @@ def api_login():
     
     return jsonify({'success': False, 'message': 'Invalid credentials'})
 
+@app.route('/api/change-password', methods=['POST'])
+@login_required
+def api_change_password():
+    """Change password"""
+    data = request.json
+    old_password = data.get('old_password', '')
+    new_password = data.get('new_password', '')
+    
+    if not old_password or not new_password:
+        return jsonify({'success': False, 'message': 'Old and new password required'})
+    
+    username = session.get('user_id')
+    if models.change_password(username, old_password, new_password):
+        return jsonify({'success': True})
+    
+    return jsonify({'success': False, 'message': 'Invalid old password'})
+
 @app.route('/logout')
 def logout():
     """Logout"""

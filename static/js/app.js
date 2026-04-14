@@ -135,6 +135,11 @@ function setupEventListeners() {
     // Save settings
     document.getElementById('saveSettingsBtn').addEventListener('click', () => {
         saveSettings();
+
+    // Change password
+    document.getElementById('changePasswordBtn').addEventListener('click', () => {
+        changePassword();
+    });
     });
     
     // Test Telegram
@@ -451,6 +456,45 @@ async function saveSettings() {
         }
     } catch (error) {
         showToast('Failed to save settings', 'error');
+    }
+}
+
+async function changePassword() {
+    const currentPassword = document.getElementById('currentPassword').value;
+    const newPassword = document.getElementById('newPassword').value;
+    const confirmPassword = document.getElementById('confirmPassword').value;
+    
+    if (!currentPassword || !newPassword || !confirmPassword) {
+        showToast('Please fill all password fields', 'error');
+        return;
+    }
+    
+    if (newPassword !== confirmPassword) {
+        showToast('New passwords do not match', 'error');
+        return;
+    }
+    
+    try {
+        const response = await fetch('/api/change-password', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                old_password: currentPassword,
+                new_password: newPassword
+            })
+        });
+        
+        const result = await response.json();
+        if (result.success) {
+            showToast('Password changed successfully', 'success');
+            document.getElementById('currentPassword').value = '';
+            document.getElementById('newPassword').value = '';
+            document.getElementById('confirmPassword').value = '';
+        } else {
+            showToast(result.message || 'Failed to change password', 'error');
+        }
+    } catch (error) {
+        showToast('Failed to change password', 'error');
     }
 }
 
