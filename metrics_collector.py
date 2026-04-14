@@ -180,6 +180,29 @@ class MetricsCollector:
                 f'{storage_exceeds}/{storage_datapoints} datapoints in {storage_eval_minutes} min'
             )
 
+    def start(self):
+        """Start the metrics collector"""
+        if not self.running:
+            self.running = True
+            # Collect immediately
+            self.collect_all_metrics()
+            # Schedule periodic collection
+            self.scheduler.add_job(
+                self.collect_all_metrics,
+                'interval',
+                seconds=config.Config.METRICS_INTERVAL,
+                id='metrics_collection'
+            )
+            self.scheduler.start()
+            logger.info("Metrics collector started")
+
+    def stop(self):
+        """Stop the metrics collector"""
+        if self.running:
+            self.scheduler.shutdown()
+            self.running = False
+            logger.info("Metrics collector stopped")
+
 # Global collector instance
 collector = MetricsCollector()
 
