@@ -236,6 +236,15 @@ def get_alerts():
     alerts = models.get_unresolved_alerts()
     return jsonify(alerts)
 
+@app.route('/api/alarms', methods=['GET'])
+def get_alarms():
+    """Get all alarm states for UI sidebar"""
+    alarms = models.get_all_alarm_states()
+    return jsonify({
+        'count': len(alarms),
+        'alarms': alarms
+    })
+
 def init_app():
     """Initialize the application"""
     # Initialize database

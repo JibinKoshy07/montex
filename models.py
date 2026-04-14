@@ -290,6 +290,18 @@ def set_alarm_state(server_id, metric, state):
         ''', (server_id, metric, state))
         conn.commit()
 
+def get_all_alarm_states():
+    """Get all alarm states for all servers (for UI)"""
+    with get_db() as conn:
+        cursor = conn.cursor()
+        cursor.execute('''
+            SELECT s.name as server_name, a.metric, a.state, a.updated_at
+            FROM alarm_states a
+            JOIN servers s ON a.server_id = s.id
+            WHERE a.state = 'ALARM'
+        ''')
+        return [dict(row) for row in cursor.fetchall()]
+
 def get_unresolved_alerts():
     """Get unresolved alerts"""
     with get_db() as conn:
