@@ -889,10 +889,13 @@ function closeServerDetailModal() {
 }
 
 // Fetch alarm status for sidebar badge
+let currentAlarms = [];
+
 async function fetchAlarms() {
     try {
         const response = await fetch('/api/alarms');
         const data = await response.json();
+        currentAlarms = data.alarms || [];
         
         const alarmBadge = document.getElementById('alarmBadge');
         const alarmCount = document.getElementById('alarmCount');
@@ -907,6 +910,35 @@ async function fetchAlarms() {
         console.error('Error fetching alarms:', error);
     }
 }
+
+function showAlarmsModal() {
+    const modal = document.getElementById('alarmsModal');
+    const list = document.getElementById('alarmsList');
+    
+    if (currentAlarms.length === 0) {
+        list.innerHTML = '<p style="color: var(--text-secondary);">No alarms</p>';
+    } else {
+        list.innerHTML = currentAlarms.map(alarm => `
+            <div class="alarm-item">
+                <span>${alarm.server_name}</span>
+                <span class="metric-label">${alarm.metric.toUpperCase()}</span>
+            </div>
+        `).join('');
+    }
+    
+    modal.classList.add('active');
+}
+
+function closeAlarmsModal() {
+    document.getElementById('alarmsModal').classList.remove('active');
+}
+
+// Add alarms modal close handler
+document.getElementById('alarmsModal')?.addEventListener('click', (e) => {
+    if (e.target.id === 'alarmsModal') {
+        closeAlarmsModal();
+    }
+});
 
 // Initialize alarm polling on page load
 fetchAlarms();

@@ -58,11 +58,9 @@
             </nav>
             
             <!-- Alarm Status Badge -->
-            <div class="alarm-badge" id="alarmBadge" style="display: none;">
-                <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
-                    <path d="M10 2a6 6 0 00-6 6v4l1.5 3h9L16 8V8a6 6 0 00-6-6zm0 12a2 2 0 01-2-2h4a2 2 0 01-2 2z"/>
-                </svg>
-                <span id="alarmCount">0</span>
+            <div class="alarm-badge" id="alarmBadge" style="display: none;" onclick="showAlarmsModal()">
+                <span id="alarmLabel">In Alarm</span>
+                <span class="alarm-count-badge" id="alarmCount">0</span>
             </div>
             
             <div class="sidebar-footer">
@@ -432,6 +430,23 @@
     
     <!-- Toast Container -->
     <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Alarms Modal -->
+    <div class="modal" id="alarmsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Alarms</h2>
+                <button class="modal-close" onclick="closeAlarmsModal()">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M18 6L6 18M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="alarmsList"></div>
+            </div>
+        </div>
+    </div>
 
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>

@@ -1186,19 +1186,56 @@ input[type="range"]::-webkit-slider-thumb:hover {
     bottom: 80px;
     left: 16px;
     right: 16px;
-    background: #f85149;
+    background: linear-gradient(135deg, #f85149 0%, #da3633 100%);
     color: white;
     padding: 10px 16px;
     border-radius: 8px;
     display: flex;
     align-items: center;
-    gap: 8px;
+    justify-content: space-between;
     font-weight: 600;
     font-size: 14px;
+    cursor: pointer;
     animation: pulse 2s infinite;
+    border: none;
+}
+
+.alarm-badge:hover {
+    background: linear-gradient(135deg, #da3633 100%, #f85149 100%);
+}
+
+.alarm-count-badge {
+    background: white;
+    color: #f85149;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 12px;
+    min-width: 20px;
+    text-align: center;
 }
 
 @keyframes pulse {
     0%, 100% { opacity: 1; }
     50% { opacity: 0.8; }
+}
+
+/* Alarm Item */
+.alarm-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    background: var(--bg-secondary);
+    border-radius: 8px;
+    margin-bottom: 8px;
+    border-left: 3px solid #f85149;
+}
+
+.alarm-item .metric-label {
+    background: #f85149;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 600;
 }
