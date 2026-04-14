@@ -1,5 +1,6 @@
 import sqlite3
 import json
+import hashlib
 from datetime import datetime, timedelta
 from contextlib import contextmanager
 import os
