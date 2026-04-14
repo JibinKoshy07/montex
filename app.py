@@ -6,6 +6,18 @@ import telegram_bot
 import metrics_collector
 import config
 import json
+import logging
+import logging.handlers
+
+# Setup logging to file
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.handlers.RotatingFileHandler('montex.log', maxBytes=5*1024*1024, backupCount=3),
+        logging.StreamHandler()
+    ]
+)
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = config.Config.SECRET_KEY
