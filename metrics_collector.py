@@ -103,6 +103,24 @@ class MetricsCollector:
         
         # Cleanup old metrics
         models.cleanup_old_metrics(config.Config.METRICS_RETENTION_HOURS)
+    
+    def notify_server_online(self, server):
+        """Notify when server comes back online"""
+        token = models.get_setting('telegram_token')
+        chat_id = models.get_setting('telegram_chat_id')
+        
+        if token and chat_id:
+            notifier = telegram_bot.TelegramNotifier(token, chat_id)
+            notifier.send_server_online(server['name'])
+    
+    def notify_server_offline(self, server):
+        """Notify when server goes offline"""
+        token = models.get_setting('telegram_token')
+        chat_id = models.get_setting('telegram_chat_id')
+        
+        if token and chat_id:
+            notifier = telegram_bot.TelegramNotifier(token, chat_id)
+            notifier.send_server_offline(server['name'])
         
     def get_thresholds(self):
         '''Get current thresholds from settings'''
@@ -171,6 +189,9 @@ class MetricsCollector:
         # Check state changes and notify only on transition (CloudWatch-style)
         for metric, in_alarm in evaluations.items():
             old_state = models.get_alarm_state(server_id, metric)
+            # Initial state is None (unknown), treat as OK to trigger first alarm
+            if old_state is None:
+                old_state = 'OK'
             new_state = 'ALARM' if in_alarm else 'OK'
             
             if old_state != new_state:
