@@ -180,3 +180,6 @@ class MetricsCollector:
                 f'{storage_exceeds}/{storage_datapoints} datapoints in {storage_eval_minutes} min'
             )
 
+# Global collector instance
+collector = MetricsCollector()
+
