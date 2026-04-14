@@ -136,15 +136,18 @@ def delete_server(server_id):
 def save_metrics(server_id, cpu_percent, memory_percent, memory_used, memory_total,
                  storage_percent, storage_used, storage_total, is_online):
     """Save metrics to history"""
+    from datetime import datetime, timezone
     with get_db() as conn:
         cursor = conn.cursor()
+        # Use UTC timestamp to ensure consistency with SQLite
+        utc_now = datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
         cursor.execute('''
             INSERT INTO metrics_history 
             (server_id, cpu_percent, memory_percent, memory_used, memory_total,
-             storage_percent, storage_used, storage_total, is_online)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+             storage_percent, storage_used, storage_total, is_online, collected_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''', (server_id, cpu_percent, memory_percent, memory_used, memory_total,
-              storage_percent, storage_used, storage_total, is_online))
+              storage_percent, storage_used, storage_total, is_online, utc_now))
 
 def get_latest_metrics(server_id):
     """Get latest metrics for a server"""
@@ -174,16 +177,27 @@ def get_metrics_history(server_id, hours=24):
         return [dict(row) for row in cursor.fetchall()]
 def get_metrics_in_minutes(server_id, minutes):
     '''Get metrics within the last N minutes'''
+    import logging
+    logger = logging.getLogger(__name__)
     with get_db() as conn:
         cursor = conn.cursor()
-        since = datetime.now() - timedelta(minutes=minutes)
+        # Use UTC datetime consistently
+        from datetime import datetime, timezone, timedelta
+        now_utc = datetime.now(timezone.utc)
+        since = now_utc - timedelta(minutes=minutes)
         since_str = since.strftime('%Y-%m-%d %H:%M:%S')
+        current_str = now_utc.strftime('%Y-%m-%d %H:%M:%S')
+        
+        logger.info(f"get_metrics_in_minutes: server_id={server_id}, minutes={minutes}, since={since_str}, now={current_str}")
+        
         cursor.execute('''
             SELECT * FROM metrics_history 
-            WHERE server_id = ? AND collected_at > ?
+            WHERE server_id = ? AND collected_at > ? AND collected_at <= ?
             ORDER BY collected_at DESC
-        ''', (server_id, since_str))
-        return [dict(row) for row in cursor.fetchall()]
+        ''', (server_id, since_str, current_str))
+        results = cursor.fetchall()
+        logger.info(f"Found {len(results)} metrics in last {minutes} min")
+        return [dict(row) for row in results]
 
 def get_all_latest_metrics():
     """Get latest metrics for all servers"""
