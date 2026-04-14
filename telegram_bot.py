@@ -13,7 +13,10 @@ class TelegramNotifier:
     
     def send_message(self, text, parse_mode='HTML'):
         """Send message to Telegram"""
+        logger.info(f"Sending Telegram message: {text[:50]}...")
+        
         if not self.token or not self.chat_id:
+            logger.warning("Telegram not configured - no token or chat_id")
             return {'success': False, 'message': 'Telegram not configured'}
         
         url = f"{self.api_url}/sendMessage"
@@ -28,9 +31,11 @@ class TelegramNotifier:
             result = response.json()
             
             if result.get('ok'):
+                logger.info("Telegram message sent successfully!")
                 return {'success': True, 'message': 'Message sent'}
             else:
                 error_msg = result.get('description', 'Unknown error')
+                logger.error(f"Telegram API error: {error_msg}")
                 return {'success': False, 'message': error_msg}
                 
         except requests.exceptions.Timeout:
