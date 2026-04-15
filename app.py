@@ -81,6 +81,13 @@ def logout():
     session.clear()
     return redirect(url_for('login'))
 
+@app.route('/api/logout', methods=['POST'])
+@login_required
+def api_logout():
+    """API logout"""
+    session.clear()
+    return jsonify({'success': True})
+
 @app.route('/')
 @login_required
 def index():
