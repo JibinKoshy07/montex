@@ -11,15 +11,18 @@ import logging
 import logging.handlers
 import hashlib
 
-# Setup logging to file
+# Setup logging to file only (disable console output)
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     handlers=[
-        logging.handlers.RotatingFileHandler('montex.log', maxBytes=5*1024*1024, backupCount=3),
-        logging.StreamHandler()
+        logging.handlers.RotatingFileHandler('montex.log', maxBytes=5*1024*1024, backupCount=3)
     ]
 )
+
+# Disable werkzeug request logging
+log = logging.getLogger('werkzeug')
+log.setLevel(logging.ERROR)
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = config.Config.SECRET_KEY
