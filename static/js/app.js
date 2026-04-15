@@ -81,7 +81,12 @@ function setupEventListeners() {
         tab.addEventListener('click', () => {
             document.querySelectorAll('.chart-tab').forEach(t => t.classList.remove('active'));
             tab.classList.add('active');
-            loadServerDetailChart(currentDetailServerId, parseInt(tab.dataset.range));
+            const days = parseFloat(tab.dataset.range);
+            loadServerDetailChart(currentDetailServerId, days);
+            // Restart live refresh with new time range
+            if (currentDetailServerId) {
+                startDetailRefresh(currentDetailServerId, days);
+            }
         });
     });
     
@@ -682,10 +687,26 @@ async function deleteServer(serverId) {
 }
 
 // Auto Refresh
+let detailRefreshInterval = null;
 function startAutoRefresh() {
     setInterval(() => {
         loadServers();
     }, 5000); // 5 seconds
+}
+
+// Auto refresh for server detail view
+function startDetailRefresh(serverId, days) {
+    if (detailRefreshInterval) clearInterval(detailRefreshInterval);
+    detailRefreshInterval = setInterval(() => {
+        loadServerDetailChart(serverId, days);
+    }, 10000); // 10 seconds for live updates
+}
+
+function stopDetailRefresh() {
+    if (detailRefreshInterval) {
+        clearInterval(detailRefreshInterval);
+        detailRefreshInterval = null;
+    }
 }
 
 // Utility Functions
@@ -790,10 +811,10 @@ async function openServerDetailModal(serverId) {
         updateDetailMetric('Storage', m.storage_percent);
     }
     
-    // Load chart with default 30 minutes
-    loadServerDetailChart(serverId, 0.02);
-    
-    modal.classList.add('active');
+    // Load chart with default 10 minutes
+    loadServerDetailChart(serverId, 0.007);
+    // Start live refresh for detail view
+    startDetailRefresh(serverId, 0.007);
 }
 
 function updateDetailMetric(name, value) {
@@ -926,6 +947,7 @@ function renderChart(labels, cpuData, memData, diskData) {
 function closeServerDetailModal() {
     serverDetailModal.classList.remove('active');
     currentDetailServerId = null;
+    stopDetailRefresh();
     if (metricsChart) {
         metricsChart.destroy();
         metricsChart = null;
