@@ -815,6 +815,8 @@ async function openServerDetailModal(serverId) {
     loadServerDetailChart(serverId, 0.007);
     // Start live refresh for detail view
     startDetailRefresh(serverId, 0.007);
+    
+    modal.classList.add('active');
 }
 
 function updateDetailMetric(name, value) {
