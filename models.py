@@ -199,18 +199,18 @@ def delete_server(server_id):
 def save_metrics(server_id, cpu_percent, memory_percent, memory_used, memory_total,
                  storage_percent, storage_used, storage_total, is_online):
     """Save metrics to history"""
-    from datetime import datetime, timezone
+    from datetime import datetime
     with get_db() as conn:
         cursor = conn.cursor()
-        # Use UTC timestamp to ensure consistency with SQLite
-        utc_now = datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
+        # Use local time for consistency
+        now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         cursor.execute('''
             INSERT INTO metrics_history 
             (server_id, cpu_percent, memory_percent, memory_used, memory_total,
              storage_percent, storage_used, storage_total, is_online, collected_at)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''', (server_id, cpu_percent, memory_percent, memory_used, memory_total,
-              storage_percent, storage_used, storage_total, is_online, utc_now))
+              storage_percent, storage_used, storage_total, is_online, now))
 
 def get_latest_metrics(server_id):
     """Get latest metrics for a server"""
@@ -229,10 +229,10 @@ def get_metrics_history(server_id, hours=24):
     """Get metrics history for a server"""
     with get_db() as conn:
         cursor = conn.cursor()
-        # Use UTC consistently
-        from datetime import datetime, timezone, timedelta
-        now_utc = datetime.now(timezone.utc)
-        since = now_utc - timedelta(hours=hours)
+        # Use naive datetime for SQLite compatibility
+        from datetime import datetime, timedelta
+        now = datetime.now()
+        since = now - timedelta(hours=hours)
         # Format for SQLite: YYYY-MM-DD HH:MM:SS
         since_str = since.strftime('%Y-%m-%d %H:%M:%S')
         cursor.execute('''
