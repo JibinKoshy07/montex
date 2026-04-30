@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+  montex:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: montex
+    ports:
+      - "5000:5000"
+    volumes:
+      - montex_data:/app/data
+    environment:
+      - FLASK_APP=app.py
+      - FLASK_ENV=production
+      - SECRET_KEY=${SECRET_KEY:-montex-secret-key-change-in-production}
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5000/') or exit(1)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+volumes:
+  montex_data:
+    driver: local

@@ -1,1 +1,86 @@
-# montex
+# Montex - Lightweight Server Monitoring
+
+A production-grade, lightweight server monitoring application that monitors remote servers via SSH and displays CPU, Memory, and Storage metrics. Includes Telegram notifications for threshold alerts.
+
+## Features
+
+- **SSH-based Monitoring**: Connect to remote servers via SSH to collect metrics
+- **Real-time Dashboard**: View all servers and their status at a glance
+- **Metrics Collection**: CPU, Memory, and Storage usage monitoring
+- **Telegram Alerts**: Get notified via Telegram when thresholds are exceeded
+- **Server Offline Alerts**: Notifications when servers go offline/come back online
+- **Dark Theme UI**: Modern, production-grade interface
+- **Responsive Design**: Works on desktop, tablet, and mobile
+
+## Quick Start
+
+```bash
+# Install dependencies
+pip install -r requirements.txt
+
+# Start the application
+python3 app.py
+```
+
+The application will be available at `http://localhost:5000`
+
+## Configuration
+
+### Adding a Server
+
+1. Click "Add Server" in the sidebar
+2. Enter server details:
+   - Server Name (e.g., "Production Web Server")
+   - Hostname/IP (e.g., "192.168.1.100")
+   - SSH Port (default: 22)
+   - SSH Username
+   - Authentication Type (Password or SSH Key)
+3. Click "Test Connection" to verify
+4. Click "Save Server"
+
+### Configuring Telegram Notifications
+
+1. Go to Settings
+2. Enter your Telegram Bot Token (get from @BotFather)
+3. Enter your Chat ID (get from @userinfobot)
+4. Adjust threshold sliders as needed
+5. Click "Save Settings"
+6. Click "Test" to verify notifications work
+
+## API Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/` | Main dashboard |
+| GET | `/api/servers` | List all servers |
+| POST | `/api/servers` | Add new server |
+| PUT | `/api/servers/<id>` | Update server |
+| DELETE | `/api/servers/<id>` | Delete server |
+| GET | `/api/settings` | Get settings |
+| POST | `/api/settings` | Update settings |
+| POST | `/api/test-connection` | Test SSH connection |
+| POST | `/api/test-telegram` | Test Telegram notification |
+
+## Default Thresholds
+
+- CPU: 80%
+- Memory: 85%
+- Storage: 90%
+
+## Technology Stack
+
+- **Backend**: Flask (Python)
+- **Database**: SQLite
+- **SSH**: Paramiko
+- **Scheduling**: APScheduler
+- **Notifications**: Telegram Bot API
+
+## Security
+
+- SSH credentials are encrypted at rest
+- No plain-text passwords stored
+- Secure session management
+
+## License
+
+MIT
