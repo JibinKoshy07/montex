@@ -81,6 +81,35 @@ The application will be available at `http://localhost:5000`
 - No plain-text passwords stored
 - Secure session management
 
+## ⚠️ Security Setup Before Running
+
+**Before running the application in production, you MUST update these security keys:**
+
+### 1. Set SECRET_KEY Environment Variable
+
+The application uses a default secret key for session management. **Change this before production use:**
+
+```bash
+# Generate a random secret key (Python 3.6+)
+python3 -c "import secrets; print(secrets.token_hex(32))"
+
+# Or set it as an environment variable
+export SECRET_KEY="your-unique-secret-key-here"
+```
+
+You can also set it in docker-compose.yml or a `.env` file.
+
+### 2. Change Default Admin Password
+
+The application creates a default admin user (`admin`/`admin123`) on first run. **Change this password immediately** after first login via the Settings → Change Password option.
+
+### 3. Recommended Environment Variables
+
+```bash
+export SECRET_KEY="your-secure-random-key"      # Required: session security
+export ENCRYPTION_KEY="your-encryption-key"  # Optional: auto-generated if not set
+```
+
 ## License
 
 MIT
