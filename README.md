@@ -114,23 +114,19 @@ export ENCRYPTION_KEY="your-encryption-key"  # Optional: auto-generated if not s
 
 When adding remote servers to monitor, **create a dedicated read-only user** on each remote server instead of using root or privileged users. This follows the **principle of least privilege**.
 
+The monitoring app only needs to run read-only commands like `top`, `free`, `df`, and `uptime` - these don't require root/sudo.
+
 On each remote server, run:
 
 ```bash
-# As root or with sudo:
-# 1. Create a read-only user
-sudo useradd -m -s /bin/bash montex
+# Create a read-only user (no root/sudo needed)
+useradd -m -s /bin/bash montex
 
-# 2. Allow only read-only commands (optional, for better security)
-# Edit sudoers: sudo visudo
-# Add this line for limited sudo access:
-montex ALL=(ALL) NOPASSWD: /usr/bin/top, /usr/bin/free, /usr/bin/df, /usr/bin/uptime, /usr/bin/vmstat
-
-# 3. Set password for the user
-sudo passwd montex
+# Set password for the user
+passwd montex
 ```
 
-Then use these read-only credentials when adding servers in Montex. The monitoring app only needs to run read-only commands like `top`, `free`, `df`, and `uptime`.
+Then use these read-only credentials when adding servers in Montex.
 
 ## License
 
