@@ -110,6 +110,24 @@ export SECRET_KEY="your-secure-random-key"      # Required: session security
 export ENCRYPTION_KEY="your-encryption-key"  # Optional: auto-generated if not set
 ```
 
+### 4. Create a Read-Only SSH User for Monitoring
+
+When adding remote servers to monitor, **create a dedicated read-only user** on each remote server instead of using root or privileged users. This follows the **principle of least privilege**.
+
+The monitoring app only needs to run read-only commands like `top`, `free`, `df`, and `uptime` - these don't require root/sudo.
+
+On each remote server, run:
+
+```bash
+# Create a read-only user (no root/sudo needed)
+useradd -m -s /bin/bash montex
+
+# Set password for the user
+passwd montex
+```
+
+Then use these read-only credentials when adding servers in Montex.
+
 ## License
 
 MIT
