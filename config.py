@@ -1,8 +1,14 @@
 import os
+import logging
+
+logger = logging.getLogger(__name__)
 
 class Config:
-    # Flask
-    SECRET_KEY = os.environ.get('SECRET_KEY', 'montex-secret-key-change-in-production')
+    # Flask - SECRET_KEY must be set via environment variable
+    SECRET_KEY = os.environ.get('SECRET_KEY')
+    if not SECRET_KEY:
+        logger.error("SECRET_KEY environment variable is required")
+        raise ValueError("SECRET_KEY environment variable must be set")
     
     # Database
     DATABASE_PATH = os.path.join(os.path.dirname(__file__), 'montex.db')

@@ -182,12 +182,14 @@ def update_server(server_id):
     return jsonify({'success': True})
 
 @app.route('/api/servers/<int:server_id>', methods=['DELETE'])
+@login_required
 def delete_server(server_id):
     """Delete server"""
     models.delete_server(server_id)
     return jsonify({'success': True})
 
 @app.route('/api/servers/<int:server_id>/metrics', methods=['GET'])
+@login_required
 def get_server_metrics(server_id):
     """Get server metrics"""
     server = models.get_server(server_id)
@@ -326,20 +328,30 @@ def get_alarms():
 
 def init_app():
     """Initialize the application"""
+    import os
+    import logging
+    
+    logger = logging.getLogger(__name__)
+    
     # Initialize database
     models.init()
     
-    # Create default admin user if none exists
-    import logging
-    logger = logging.getLogger(__name__)
+    # Require admin credentials from environment
+    admin_username = os.environ.get('ADMIN_USERNAME', 'admin')
+    admin_password = os.environ.get('ADMIN_PASSWORD')
+    
+    if not admin_password:
+        logger.error("ADMIN_PASSWORD environment variable is required")
+        raise ValueError("ADMIN_PASSWORD environment variable is required")
+    
     with models.get_db() as conn:
         cursor = conn.cursor()
         cursor.execute('SELECT COUNT(*) FROM users')
         count = cursor.fetchone()[0]
         if count == 0:
-            # Create default admin user
-            models.create_user('admin', 'admin123')
-            logger.info('Created default admin user')
+            # Create default admin user with strong password from environment
+            models.create_user(admin_username, admin_password)
+            logger.info(f'Created default admin user: {admin_username}')
 
     # Start metrics collector
     metrics_collector.collector.start()

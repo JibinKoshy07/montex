@@ -20,7 +20,9 @@ class SSHClient:
     def connect(self):
         """Establish SSH connection"""
         self.client = paramiko.SSHClient()
-        self.client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        # Use RejectPolicy for security - don't auto-add unknown host keys
+        # This prevents MITM attacks. Known hosts should be added to known_hosts manually
+        self.client.set_missing_host_key_policy(paramiko.RejectPolicy())
         
         try:
             if self.auth_type == 'password':

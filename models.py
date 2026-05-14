@@ -1,12 +1,17 @@
 import sqlite3
 import json
 import hashlib
+import secrets
 from datetime import datetime, timedelta
 from contextlib import contextmanager
 import os
 import config
 
 DATABASE_PATH = config.Config.DATABASE_PATH
+
+# Static salt for password hashing - should be set via environment in production
+# In production, use a unique salt per user stored in database
+PASSWORD_SALT = os.environ.get('PASSWORD_SALT', 'montex-default-salt-change-in-production')
 
 @contextmanager
 def get_db():
@@ -116,41 +121,66 @@ def init_db():
         conn.commit()
 
 def create_user(username, password):
-    """Create a new user with hashed password"""
-    password_hash = hashlib.sha256(password.encode()).hexdigest()
+    """Create a new user with salted password hash"""
+    # Use PBKDF2 with salt for better security
+    salt = secrets.token_hex(16)
+    password_hash = hashlib.pbkdf2_hmac('sha256', password.encode(), (PASSWORD_SALT + salt).encode(), 100000).hex()
     with get_db() as conn:
         cursor = conn.cursor()
         try:
             cursor.execute('''
                 INSERT INTO users (username, password_hash)
                 VALUES (?, ?)
-            ''', (username, password_hash))
+            ''', (username, salt + ':' + password_hash))
             conn.commit()
             return True
         except:
             return False
 
 def verify_user(username, password):
-    """Verify user credentials"""
-    password_hash = hashlib.sha256(password.encode()).hexdigest()
+    """Verify user credentials with salted password hash"""
     with get_db() as conn:
         cursor = conn.cursor()
         cursor.execute('''
-            SELECT id FROM users 
-            WHERE username = ? AND password_hash = ?
-        ''', (username, password_hash))
-        return cursor.fetchone() is not None
+            SELECT password_hash FROM users 
+            WHERE username = ?
+        ''', (username,))
+        row = cursor.fetchone()
+        if not row:
+            return False
+        
+        stored_hash = row['password_hash']
+        # Handle both new format (salt:hash) and legacy format (plain hash)
+        if ':' in stored_hash:
+            salt, hash_part = stored_hash.split(':', 1)
+            password_hash = hashlib.pbkdf2_hmac('sha256', password.encode(), (PASSWORD_SALT + salt).encode(), 100000).hex()
+            return password_hash == hash_part
+        else:
+            # Legacy: verify against old SHA256 and upgrade if successful
+            old_hash = hashlib.sha256(password.encode()).hexdigest()
+            if old_hash == stored_hash:
+                # Upgrade to new format on successful login
+                salt = secrets.token_hex(16)
+                new_hash = hashlib.pbkdf2_hmac('sha256', password.encode(), (PASSWORD_SALT + salt).encode(), 100000).hex()
+                cursor.execute('''
+                    UPDATE users SET password_hash = ? WHERE username = ?
+                ''', (salt + ':' + new_hash, username))
+                conn.commit()
+                return True
+            return False
 
 def change_password(username, old_password, new_password):
-    """Change user password"""
+    """Change user password with salt"""
     if not verify_user(username, old_password):
         return False
-    new_hash = hashlib.sha256(new_password.encode()).hexdigest()
+    # Generate new salt for the new password
+    salt = secrets.token_hex(16)
+    new_hash = hashlib.pbkdf2_hmac('sha256', new_password.encode(), (PASSWORD_SALT + salt).encode(), 100000).hex()
     with get_db() as conn:
         cursor = conn.cursor()
         cursor.execute('''
             UPDATE users SET password_hash = ? WHERE username = ?
-        ''', (new_hash, username))
+        ''', (salt + ':' + new_hash, username))
         conn.commit()
         return cursor.rowcount > 0
 
